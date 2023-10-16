@@ -1,11 +1,12 @@
-module Lib where
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+module WeatherAnalysis where
 
 import Network.HTTP.Simple
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Aeson
 import GHC.Generics
-import Data.List (sortBy)
-import Data.Ord (comparing)
 
 -- Define a data type for weather data
 data WeatherData = WeatherData {
@@ -32,14 +33,20 @@ fetchWeatherData apiKey lat lon = do
 storeWeatherData :: L8.ByteString -> FilePath -> IO ()
 storeWeatherData weatherData filename = L8.writeFile filename weatherData
 
--- Convert Kelvin to Fahrenheit
-kelvinToFahrenheit :: Float -> Float
-kelvinToFahrenheit k = (k - 273.15) * 9/5 + 32
-
--- Data Sorting
-sortWeatherDataByTemperature :: [WeatherData] -> [WeatherData]
-sortWeatherDataByTemperature = sortBy (comparing (temp . main))
-
--- Data Filtering
-filterWeatherDataByTemperature :: Float -> [WeatherData] -> [WeatherData]
-filterWeatherDataByTemperature threshold = filter (\wd -> temp (main wd) > threshold)
+-- Example usage
+main :: IO ()
+main = do
+    -- Define API key, latitude, and longitude
+    let apiKey = "43227aead2fa7bd3f2af255f98a5a53a"
+    let lat = 41.8077  -- Latitude for UConn
+    let lon = 72.2540  -- Longitude for UConn
+    
+    -- Fetch weather data from OpenWeatherMap
+    response <- fetchWeatherData apiKey lat lon
+    
+    -- Extract and print the response body
+    let weatherData = getResponseBody response
+    L8.putStrLn weatherData
+    
+    -- Store the weather data in a file
+    storeWeatherData weatherData "weatherdata.json"
