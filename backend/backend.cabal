@@ -25,7 +25,6 @@ source-repository head
 library
   exposed-modules:
       Lib
-      TestLib
   other-modules:
       Paths_backend
   autogen-modules:
@@ -35,12 +34,15 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , blaze-html
     , bytestring
+    , hslogger
     , http-client
     , http-conduit
     , http-types
+    , parallel
     , servant
     , servant-blaze
     , servant-server
@@ -62,13 +64,16 @@ executable backend
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , async
     , backend
     , base >=4.7 && <5
     , blaze-html
     , bytestring
+    , hslogger
     , http-client
     , http-conduit
     , http-types
+    , parallel
     , servant
     , servant-blaze
     , servant-server
@@ -91,13 +96,17 @@ test-suite backend-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , async
     , backend
     , base >=4.7 && <5
     , blaze-html
     , bytestring
+    , hslogger
+    , hspec
     , http-client
     , http-conduit
     , http-types
+    , parallel
     , servant
     , servant-blaze
     , servant-server

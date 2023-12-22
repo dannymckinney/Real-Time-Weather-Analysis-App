@@ -80,6 +80,190 @@ function A9(fun, a, b, c, d, e, f, g, h, i) {
 console.warn('Compiled in DEV mode. Follow the advice at https://elm-lang.org/0.19.1/optimize for better performance and smaller assets.');
 
 
+// EQUALITY
+
+function _Utils_eq(x, y)
+{
+	for (
+		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
+		isEqual && (pair = stack.pop());
+		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
+		)
+	{}
+
+	return isEqual;
+}
+
+function _Utils_eqHelp(x, y, depth, stack)
+{
+	if (x === y)
+	{
+		return true;
+	}
+
+	if (typeof x !== 'object' || x === null || y === null)
+	{
+		typeof x === 'function' && _Debug_crash(5);
+		return false;
+	}
+
+	if (depth > 100)
+	{
+		stack.push(_Utils_Tuple2(x,y));
+		return true;
+	}
+
+	/**/
+	if (x.$ === 'Set_elm_builtin')
+	{
+		x = $elm$core$Set$toList(x);
+		y = $elm$core$Set$toList(y);
+	}
+	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	/**_UNUSED/
+	if (x.$ < 0)
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	for (var key in x)
+	{
+		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+var _Utils_equal = F2(_Utils_eq);
+var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
+
+
+
+// COMPARISONS
+
+// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
+// the particular integer values assigned to LT, EQ, and GT.
+
+function _Utils_cmp(x, y, ord)
+{
+	if (typeof x !== 'object')
+	{
+		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
+	}
+
+	/**/
+	if (x instanceof String)
+	{
+		var a = x.valueOf();
+		var b = y.valueOf();
+		return a === b ? 0 : a < b ? -1 : 1;
+	}
+	//*/
+
+	/**_UNUSED/
+	if (typeof x.$ === 'undefined')
+	//*/
+	/**/
+	if (x.$[0] === '#')
+	//*/
+	{
+		return (ord = _Utils_cmp(x.a, y.a))
+			? ord
+			: (ord = _Utils_cmp(x.b, y.b))
+				? ord
+				: _Utils_cmp(x.c, y.c);
+	}
+
+	// traverse conses until end of a list or a mismatch
+	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
+	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
+}
+
+var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
+var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
+var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
+var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
+
+var _Utils_compare = F2(function(x, y)
+{
+	var n = _Utils_cmp(x, y);
+	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
+});
+
+
+// COMMON VALUES
+
+var _Utils_Tuple0_UNUSED = 0;
+var _Utils_Tuple0 = { $: '#0' };
+
+function _Utils_Tuple2_UNUSED(a, b) { return { a: a, b: b }; }
+function _Utils_Tuple2(a, b) { return { $: '#2', a: a, b: b }; }
+
+function _Utils_Tuple3_UNUSED(a, b, c) { return { a: a, b: b, c: c }; }
+function _Utils_Tuple3(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
+
+function _Utils_chr_UNUSED(c) { return c; }
+function _Utils_chr(c) { return new String(c); }
+
+
+// RECORDS
+
+function _Utils_update(oldRecord, updatedFields)
+{
+	var newRecord = {};
+
+	for (var key in oldRecord)
+	{
+		newRecord[key] = oldRecord[key];
+	}
+
+	for (var key in updatedFields)
+	{
+		newRecord[key] = updatedFields[key];
+	}
+
+	return newRecord;
+}
+
+
+// APPEND
+
+var _Utils_append = F2(_Utils_ap);
+
+function _Utils_ap(xs, ys)
+{
+	// append Strings
+	if (typeof xs === 'string')
+	{
+		return xs + ys;
+	}
+
+	// append Lists
+	if (!xs.b)
+	{
+		return ys;
+	}
+	var root = _List_Cons(xs.a, ys);
+	xs = xs.b
+	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		curr = curr.b = _List_Cons(xs.a, ys);
+	}
+	return root;
+}
+
+
+
 var _List_Nil_UNUSED = { $: 0 };
 var _List_Nil = { $: '[]' };
 
@@ -605,190 +789,6 @@ function _Debug_regionToString(region)
 		return 'on line ' + region.start.line;
 	}
 	return 'on lines ' + region.start.line + ' through ' + region.end.line;
-}
-
-
-
-// EQUALITY
-
-function _Utils_eq(x, y)
-{
-	for (
-		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
-		isEqual && (pair = stack.pop());
-		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
-		)
-	{}
-
-	return isEqual;
-}
-
-function _Utils_eqHelp(x, y, depth, stack)
-{
-	if (x === y)
-	{
-		return true;
-	}
-
-	if (typeof x !== 'object' || x === null || y === null)
-	{
-		typeof x === 'function' && _Debug_crash(5);
-		return false;
-	}
-
-	if (depth > 100)
-	{
-		stack.push(_Utils_Tuple2(x,y));
-		return true;
-	}
-
-	/**/
-	if (x.$ === 'Set_elm_builtin')
-	{
-		x = $elm$core$Set$toList(x);
-		y = $elm$core$Set$toList(y);
-	}
-	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	/**_UNUSED/
-	if (x.$ < 0)
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	for (var key in x)
-	{
-		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-var _Utils_equal = F2(_Utils_eq);
-var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
-
-
-
-// COMPARISONS
-
-// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
-// the particular integer values assigned to LT, EQ, and GT.
-
-function _Utils_cmp(x, y, ord)
-{
-	if (typeof x !== 'object')
-	{
-		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
-	}
-
-	/**/
-	if (x instanceof String)
-	{
-		var a = x.valueOf();
-		var b = y.valueOf();
-		return a === b ? 0 : a < b ? -1 : 1;
-	}
-	//*/
-
-	/**_UNUSED/
-	if (typeof x.$ === 'undefined')
-	//*/
-	/**/
-	if (x.$[0] === '#')
-	//*/
-	{
-		return (ord = _Utils_cmp(x.a, y.a))
-			? ord
-			: (ord = _Utils_cmp(x.b, y.b))
-				? ord
-				: _Utils_cmp(x.c, y.c);
-	}
-
-	// traverse conses until end of a list or a mismatch
-	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
-	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
-}
-
-var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
-var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
-var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
-var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
-
-var _Utils_compare = F2(function(x, y)
-{
-	var n = _Utils_cmp(x, y);
-	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
-});
-
-
-// COMMON VALUES
-
-var _Utils_Tuple0_UNUSED = 0;
-var _Utils_Tuple0 = { $: '#0' };
-
-function _Utils_Tuple2_UNUSED(a, b) { return { a: a, b: b }; }
-function _Utils_Tuple2(a, b) { return { $: '#2', a: a, b: b }; }
-
-function _Utils_Tuple3_UNUSED(a, b, c) { return { a: a, b: b, c: c }; }
-function _Utils_Tuple3(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
-
-function _Utils_chr_UNUSED(c) { return c; }
-function _Utils_chr(c) { return new String(c); }
-
-
-// RECORDS
-
-function _Utils_update(oldRecord, updatedFields)
-{
-	var newRecord = {};
-
-	for (var key in oldRecord)
-	{
-		newRecord[key] = oldRecord[key];
-	}
-
-	for (var key in updatedFields)
-	{
-		newRecord[key] = updatedFields[key];
-	}
-
-	return newRecord;
-}
-
-
-// APPEND
-
-var _Utils_append = F2(_Utils_ap);
-
-function _Utils_ap(xs, ys)
-{
-	// append Strings
-	if (typeof xs === 'string')
-	{
-		return xs + ys;
-	}
-
-	// append Lists
-	if (!xs.b)
-	{
-		return ys;
-	}
-	var root = _List_Cons(xs.a, ys);
-	xs = xs.b
-	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		curr = curr.b = _List_Cons(xs.a, ys);
-	}
-	return root;
 }
 
 
@@ -4546,32 +4546,9 @@ function _Http_track(router, xhr, tracker)
 		}))));
 	});
 }var $elm$core$Basics$EQ = {$: 'EQ'};
+var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
-var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
-var $elm$core$Array$foldr = F3(
-	function (func, baseCase, _v0) {
-		var tree = _v0.c;
-		var tail = _v0.d;
-		var helper = F2(
-			function (node, acc) {
-				if (node.$ === 'SubTree') {
-					var subTree = node.a;
-					return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
-				} else {
-					var values = node.a;
-					return A3($elm$core$Elm$JsArray$foldr, func, acc, values);
-				}
-			});
-		return A3(
-			$elm$core$Elm$JsArray$foldr,
-			helper,
-			A3($elm$core$Elm$JsArray$foldr, func, baseCase, tail),
-			tree);
-	});
-var $elm$core$Array$toList = function (array) {
-	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
-};
 var $elm$core$Dict$foldr = F3(
 	function (func, acc, t) {
 		foldr:
@@ -4624,7 +4601,30 @@ var $elm$core$Set$toList = function (_v0) {
 	var dict = _v0.a;
 	return $elm$core$Dict$keys(dict);
 };
-var $elm$core$Basics$GT = {$: 'GT'};
+var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
+var $elm$core$Array$foldr = F3(
+	function (func, baseCase, _v0) {
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var helper = F2(
+			function (node, acc) {
+				if (node.$ === 'SubTree') {
+					var subTree = node.a;
+					return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
+				} else {
+					var values = node.a;
+					return A3($elm$core$Elm$JsArray$foldr, func, acc, values);
+				}
+			});
+		return A3(
+			$elm$core$Elm$JsArray$foldr,
+			helper,
+			A3($elm$core$Elm$JsArray$foldr, func, baseCase, tail),
+			tree);
+	});
+var $elm$core$Array$toList = function (array) {
+	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
+};
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5334,8 +5334,20 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$GotWeather = function (a) {
-	return {$: 'GotWeather', a: a};
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$init = function (_v0) {
+	return _Utils_Tuple2(
+		{fetchButtonClicked: false, isFetching: false, processedData: $elm$core$Maybe$Nothing, weather: $elm$core$Maybe$Nothing},
+		$elm$core$Platform$Cmd$none);
+};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
+var $author$project$Main$subscriptions = function (_v0) {
+	return $elm$core$Platform$Sub$none;
+};
+var $author$project$Main$ReceiveProcessedData = function (a) {
+	return {$: 'ReceiveProcessedData', a: a};
 };
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
@@ -6124,46 +6136,275 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$Main$WeatherData = F2(
-	function (temp, humidity) {
-		return {humidity: humidity, temp: temp};
+var $author$project$Main$ProcessedData = F3(
+	function (avgTemperature, trend, windReport) {
+		return {avgTemperature: avgTemperature, trend: trend, windReport: windReport};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$processedDataDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$ProcessedData,
+	A2($elm$json$Json$Decode$field, 'avgTemperature', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'trend', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'windReport', $elm$json$Json$Decode$string));
+var $author$project$Main$fetchProcessedData = $elm$http$Http$get(
+	{
+		expect: A2($elm$http$Http$expectJson, $author$project$Main$ReceiveProcessedData, $author$project$Main$processedDataDecoder),
+		url: 'http://localhost:9000/processed-data'
+	});
+var $author$project$Main$ReceiveWeather = function (a) {
+	return {$: 'ReceiveWeather', a: a};
+};
+var $author$project$Main$WeatherData = function (coord) {
+	return function (weather) {
+		return function (base) {
+			return function (main) {
+				return function (visibility) {
+					return function (wind) {
+						return function (clouds) {
+							return function (dt) {
+								return function (sys) {
+									return function (timezone) {
+										return function (id) {
+											return function (name) {
+												return function (cod) {
+													return {base: base, clouds: clouds, cod: cod, coord: coord, dt: dt, id: id, main: main, name: name, sys: sys, timezone: timezone, visibility: visibility, weather: weather, wind: wind};
+												};
+											};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $author$project$Main$Clouds = function (all) {
+	return {all: all};
+};
 var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Main$weatherDecoder = A3(
+var $author$project$Main$cloudsDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$Clouds,
+	A2($elm$json$Json$Decode$field, 'all', $elm$json$Json$Decode$int));
+var $author$project$Main$Coordinates = F2(
+	function (lon, lat) {
+		return {lat: lat, lon: lon};
+	});
+var $author$project$Main$coordinatesDecoder = A3(
 	$elm$json$Json$Decode$map2,
-	$author$project$Main$WeatherData,
+	$author$project$Main$Coordinates,
+	A2($elm$json$Json$Decode$field, 'lon', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'lat', $elm$json$Json$Decode$float));
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$Main = F6(
+	function (temp, feels_like, temp_min, temp_max, pressure, humidity) {
+		return {feels_like: feels_like, humidity: humidity, pressure: pressure, temp: temp, temp_max: temp_max, temp_min: temp_min};
+	});
+var $elm$json$Json$Decode$map6 = _Json_map6;
+var $author$project$Main$mainDecoder = A7(
+	$elm$json$Json$Decode$map6,
+	$author$project$Main$Main,
 	A2($elm$json$Json$Decode$field, 'temp', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'feels_like', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'temp_min', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'temp_max', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'pressure', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'humidity', $elm$json$Json$Decode$int));
+var $author$project$Main$Sys = F5(
+	function (type_, id, country, sunrise, sunset) {
+		return {country: country, id: id, sunrise: sunrise, sunset: sunset, type_: type_};
+	});
+var $elm$json$Json$Decode$map5 = _Json_map5;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$maybe = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
+				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
+			]));
+};
+var $author$project$Main$sysDecoder = A6(
+	$elm$json$Json$Decode$map5,
+	$author$project$Main$Sys,
+	A2(
+		$elm$json$Json$Decode$field,
+		'sysType',
+		$elm$json$Json$Decode$maybe($elm$json$Json$Decode$int)),
+	A2(
+		$elm$json$Json$Decode$field,
+		'sysId',
+		$elm$json$Json$Decode$maybe($elm$json$Json$Decode$int)),
+	A2($elm$json$Json$Decode$field, 'country', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'sunrise', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'sunset', $elm$json$Json$Decode$int));
+var $author$project$Main$WeatherDescription = F4(
+	function (id, main, description, icon) {
+		return {description: description, icon: icon, id: id, main: main};
+	});
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $author$project$Main$weatherDescriptionDecoder = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$WeatherDescription,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'main', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'description', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'icon', $elm$json$Json$Decode$string));
+var $author$project$Main$Wind = F2(
+	function (speed, deg) {
+		return {deg: deg, speed: speed};
+	});
+var $author$project$Main$windDecoder = A3(
+	$elm$json$Json$Decode$map2,
+	$author$project$Main$Wind,
+	A2($elm$json$Json$Decode$field, 'speed', $elm$json$Json$Decode$float),
+	A2($elm$json$Json$Decode$field, 'deg', $elm$json$Json$Decode$int));
+var $author$project$Main$weatherDataDecoder = A2(
+	$elm$json$Json$Decode$andThen,
+	function (data) {
+		return A2(
+			$elm$json$Json$Decode$andThen,
+			function (coord) {
+				return A2(
+					$elm$json$Json$Decode$andThen,
+					function (weather) {
+						return A2(
+							$elm$json$Json$Decode$andThen,
+							function (base) {
+								return A2(
+									$elm$json$Json$Decode$andThen,
+									function (mainData) {
+										return A2(
+											$elm$json$Json$Decode$andThen,
+											function (visibility) {
+												return A2(
+													$elm$json$Json$Decode$andThen,
+													function (wind) {
+														return A2(
+															$elm$json$Json$Decode$andThen,
+															function (clouds) {
+																return A2(
+																	$elm$json$Json$Decode$andThen,
+																	function (dt) {
+																		return A2(
+																			$elm$json$Json$Decode$andThen,
+																			function (sys) {
+																				return A2(
+																					$elm$json$Json$Decode$andThen,
+																					function (timezone) {
+																						return A2(
+																							$elm$json$Json$Decode$andThen,
+																							function (id) {
+																								return A2(
+																									$elm$json$Json$Decode$andThen,
+																									function (name) {
+																										return A2(
+																											$elm$json$Json$Decode$andThen,
+																											function (cod) {
+																												return $elm$json$Json$Decode$succeed(
+																													{base: base, clouds: clouds, cod: cod, coord: coord, dt: dt, id: id, main: mainData, name: name, sys: sys, timezone: timezone, visibility: visibility, weather: weather, wind: wind});
+																											},
+																											A2($elm$json$Json$Decode$field, 'cod', $elm$json$Json$Decode$int));
+																									},
+																									A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string));
+																							},
+																							A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int));
+																					},
+																					A2($elm$json$Json$Decode$field, 'timezone', $elm$json$Json$Decode$int));
+																			},
+																			A2($elm$json$Json$Decode$field, 'sys', $author$project$Main$sysDecoder));
+																	},
+																	A2($elm$json$Json$Decode$field, 'dt', $elm$json$Json$Decode$int));
+															},
+															A2($elm$json$Json$Decode$field, 'clouds', $author$project$Main$cloudsDecoder));
+													},
+													A2($elm$json$Json$Decode$field, 'wind', $author$project$Main$windDecoder));
+											},
+											A2($elm$json$Json$Decode$field, 'visibility', $elm$json$Json$Decode$int));
+									},
+									A2($elm$json$Json$Decode$field, 'main', $author$project$Main$mainDecoder));
+							},
+							A2($elm$json$Json$Decode$field, 'base', $elm$json$Json$Decode$string));
+					},
+					A2(
+						$elm$json$Json$Decode$field,
+						'weather',
+						$elm$json$Json$Decode$list($author$project$Main$weatherDescriptionDecoder)));
+			},
+			A2($elm$json$Json$Decode$field, 'coord', $author$project$Main$coordinatesDecoder));
+	},
+	$elm$json$Json$Decode$succeed($author$project$Main$WeatherData));
 var $author$project$Main$getWeather = $elm$http$Http$get(
 	{
-		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotWeather, $author$project$Main$weatherDecoder),
-		url: 'http://localhost:3000/weather'
+		expect: A2($elm$http$Http$expectJson, $author$project$Main$ReceiveWeather, $author$project$Main$weatherDataDecoder),
+		url: 'http://localhost:9000/weather'
 	});
-var $author$project$Main$init = {weather: $elm$core$Maybe$Nothing};
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Main$subscriptions = function (_v0) {
-	return $elm$core$Platform$Sub$none;
-};
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $elm$core$Debug$log = _Debug_log;
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		if (msg.a.$ === 'Ok') {
-			var weatherData = msg.a.a;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						weather: $elm$core$Maybe$Just(weatherData)
-					}),
-				$elm$core$Platform$Cmd$none);
-		} else {
-			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		switch (msg.$) {
+			case 'FetchWeather':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{fetchButtonClicked: true, isFetching: true}),
+					$author$project$Main$getWeather);
+			case 'ReceiveWeather':
+				if (msg.a.$ === 'Ok') {
+					var weatherData = msg.a.a;
+					var updatedModel = _Utils_update(
+						model,
+						{
+							isFetching: false,
+							weather: $elm$core$Maybe$Just(weatherData)
+						});
+					return _Utils_Tuple2(updatedModel, $elm$core$Platform$Cmd$none);
+				} else {
+					var decodingError = msg.a.a;
+					var _v1 = A2($elm$core$Debug$log, 'Decoding error', decodingError);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{isFetching: false}),
+						$elm$core$Platform$Cmd$none);
+				}
+			case 'FetchProcessedData':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{isFetching: true}),
+					$author$project$Main$fetchProcessedData);
+			default:
+				if (msg.a.$ === 'Ok') {
+					var pData = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								isFetching: false,
+								processedData: $elm$core$Maybe$Just(pData)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var decodingError = msg.a.a;
+					var _v2 = A2($elm$core$Debug$log, 'Decoding error', decodingError);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{isFetching: false}),
+						$elm$core$Platform$Cmd$none);
+				}
 		}
 	});
+var $author$project$Main$FetchWeather = {$: 'FetchWeather'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6174,36 +6415,240 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$core$String$fromFloat = _String_fromNumber;
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$view = function (model) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class('weather-container')
-			]),
-		_List_fromArray(
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $author$project$Main$viewProcessedData = function (pData) {
+	return _List_fromArray(
+		[
+			A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('avg-temp')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					'Average Temperature: ' + ($elm$core$String$fromFloat(pData.avgTemperature) + '°F'))
+				])),
+			A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('weather-trend')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('Weather Trend: ' + pData.trend)
+				])),
+			A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('wind-report')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('Wind Report: ' + pData.windReport)
+				]))
+		]);
+};
+var $author$project$Main$extraClass = function (condition) {
+	return condition ? _List_fromArray(
+		[
+			$elm$html$Html$Attributes$class('disabled')
+		]) : _List_Nil;
+};
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $author$project$Main$padWithZeroes = function (value) {
+	return (value < 10) ? ('0' + $elm$core$String$fromInt(value)) : $elm$core$String$fromInt(value);
+};
+var $elm$core$Basics$round = _Basics_round;
+var $elm$time$Time$flooredDiv = F2(
+	function (numerator, denominator) {
+		return $elm$core$Basics$floor(numerator / denominator);
+	});
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
+var $elm$time$Time$toAdjustedMinutesHelp = F3(
+	function (defaultOffset, posixMinutes, eras) {
+		toAdjustedMinutesHelp:
+		while (true) {
+			if (!eras.b) {
+				return posixMinutes + defaultOffset;
+			} else {
+				var era = eras.a;
+				var olderEras = eras.b;
+				if (_Utils_cmp(era.start, posixMinutes) < 0) {
+					return posixMinutes + era.offset;
+				} else {
+					var $temp$defaultOffset = defaultOffset,
+						$temp$posixMinutes = posixMinutes,
+						$temp$eras = olderEras;
+					defaultOffset = $temp$defaultOffset;
+					posixMinutes = $temp$posixMinutes;
+					eras = $temp$eras;
+					continue toAdjustedMinutesHelp;
+				}
+			}
+		}
+	});
+var $elm$time$Time$toAdjustedMinutes = F2(
+	function (_v0, time) {
+		var defaultOffset = _v0.a;
+		var eras = _v0.b;
+		return A3(
+			$elm$time$Time$toAdjustedMinutesHelp,
+			defaultOffset,
+			A2(
+				$elm$time$Time$flooredDiv,
+				$elm$time$Time$posixToMillis(time),
+				60000),
+			eras);
+	});
+var $elm$time$Time$toHour = F2(
+	function (zone, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			24,
+			A2(
+				$elm$time$Time$flooredDiv,
+				A2($elm$time$Time$toAdjustedMinutes, zone, time),
+				60));
+	});
+var $elm$time$Time$toMinute = F2(
+	function (zone, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			60,
+			A2($elm$time$Time$toAdjustedMinutes, zone, time));
+	});
+var $elm$time$Time$toSecond = F2(
+	function (_v0, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			60,
+			A2(
+				$elm$time$Time$flooredDiv,
+				$elm$time$Time$posixToMillis(time),
+				1000));
+	});
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
+var $author$project$Main$formatTime = function (timestamp) {
+	var posixTime = $elm$time$Time$millisToPosix(
+		$elm$core$Basics$round(timestamp * 1000));
+	var seconds = A2($elm$time$Time$toSecond, $elm$time$Time$utc, posixTime);
+	var minutes = A2($elm$time$Time$toMinute, $elm$time$Time$utc, posixTime);
+	var hours = A2($elm$time$Time$toHour, $elm$time$Time$utc, posixTime);
+	return $elm$core$String$fromInt(hours) + (':' + ($author$project$Main$padWithZeroes(minutes) + (':' + $author$project$Main$padWithZeroes(seconds))));
+};
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$isNothing = function (maybeValue) {
+	if (maybeValue.$ === 'Nothing') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$viewWeatherData = F2(
+	function (weather, maybeProcessedData) {
+		var formatTemperature = function (k) {
+			return $elm$core$String$fromInt(
+				$elm$core$Basics$round((((k - 273.15) * 9) / 5) + 32));
+		};
+		var tempMaxF = formatTemperature(weather.main.temp_max);
+		var tempMinF = formatTemperature(weather.main.temp_min);
+		return _List_fromArray(
 			[
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('location')
+						$elm$html$Html$Attributes$class('weather-container')
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Sample Location')
-					])),
-				function () {
-				var _v0 = model.weather;
-				if (_v0.$ === 'Just') {
-					var weather = _v0.a;
-					return A2(
+						A2(
 						$elm$html$Html$div,
-						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('location')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('City: ' + weather.name)
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('current-weather')
+							]),
 						_List_fromArray(
 							[
 								A2(
@@ -6215,53 +6660,205 @@ var $author$project$Main$view = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										$elm$core$String$fromFloat(weather.temp) + '°C')
+										'Temperature: ' + (formatTemperature(weather.main.temp) + '°F'))
 									])),
 								A2(
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('humidity')
+										$elm$html$Html$Attributes$class('high-low')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Today\'s high will be ' + (tempMaxF + ('°F and today\'s low will be ' + (tempMinF + '°F'))))
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('condition')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Current Conditions: '),
+										$elm$html$Html$text(
+										A2(
+											$elm$core$Maybe$withDefault,
+											'',
+											A2(
+												$elm$core$Maybe$map,
+												function ($) {
+													return $.description;
+												},
+												$elm$core$List$head(weather.weather))))
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('details-container')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('details')
 									]),
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'Humidity: ' + ($elm$core$String$fromInt(weather.humidity) + '%'))
+										'Wind Speed: ' + ($elm$core$String$fromFloat(weather.wind.speed) + ' m/s'))
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('details')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										'Humidity: ' + ($elm$core$String$fromInt(weather.main.humidity) + '%'))
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('details')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										'Cloudiness: ' + ($elm$core$String$fromInt(weather.clouds.all) + '%'))
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('details feels-like')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										'Feels like: ' + (formatTemperature(weather.main.feels_like) + '°F'))
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('details')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										'Sunrise: ' + $author$project$Main$formatTime(weather.sys.sunrise))
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('details')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										'Sunset: ' + $author$project$Main$formatTime(weather.sys.sunset))
 									]))
-							]));
-				} else {
-					return A2(
+							])),
+						A2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('loading')
+								$elm$html$Html$Attributes$class('button-container')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Loading weather data...')
-							]));
-				}
-			}(),
-				A2(
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('refresh-button'),
+										$elm$html$Html$Events$onClick($author$project$Main$FetchWeather)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Fetch Weather')
+									])),
+								A2(
+								$elm$html$Html$button,
+								A2(
+									$elm$core$List$cons,
+									$elm$html$Html$Attributes$class('processed-data-button'),
+									$author$project$Main$extraClass(
+										$author$project$Main$isNothing(maybeProcessedData))),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Processed Data')
+									]))
+							]))
+					]))
+			]);
+	});
+var $author$project$Main$view = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				model.fetchButtonClicked ? $elm$html$Html$text('') : A2(
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
+						$elm$html$Html$Events$onClick($author$project$Main$FetchWeather),
+						$elm$html$Html$Attributes$disabled(model.isFetching),
 						$elm$html$Html$Attributes$class('refresh-button')
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Refresh')
-					]))
+						$elm$html$Html$text('Fetch Weather')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('weather-container')
+					]),
+				function () {
+					var _v0 = model.weather;
+					if (_v0.$ === 'Just') {
+						var weather = _v0.a;
+						return A2($author$project$Main$viewWeatherData, weather, model.processedData);
+					} else {
+						return _List_fromArray(
+							[
+								$elm$html$Html$text('No weather data available.')
+							]);
+					}
+				}()),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('processed-data-container')
+					]),
+				function () {
+					var _v1 = model.processedData;
+					if (_v1.$ === 'Just') {
+						var pData = _v1.a;
+						return $author$project$Main$viewProcessedData(pData);
+					} else {
+						return _List_fromArray(
+							[
+								$elm$html$Html$text('')
+							]);
+					}
+				}())
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
-	{
-		init: function (_v0) {
-			return _Utils_Tuple2($author$project$Main$init, $author$project$Main$getWeather);
-		},
-		subscriptions: $author$project$Main$subscriptions,
-		update: $author$project$Main$update,
-		view: $author$project$Main$view
-	});
+	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));

@@ -43,7 +43,7 @@ getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: 
 
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 bindir     = "/Users/dannymckinney/Real-Time-Weather-Analysis-App/backend/.stack-work/install/aarch64-osx/271c152fe881f23c1e62408ec3935d709b219894529d86504cf3e8810b7267d2/9.4.7/bin"
-libdir     = "/Users/dannymckinney/Real-Time-Weather-Analysis-App/backend/.stack-work/install/aarch64-osx/271c152fe881f23c1e62408ec3935d709b219894529d86504cf3e8810b7267d2/9.4.7/lib/aarch64-osx-ghc-9.4.7/backend-0.1.0.0-4dqEnEUxw88DXgMmIf9bb5-backend"
+libdir     = "/Users/dannymckinney/Real-Time-Weather-Analysis-App/backend/.stack-work/install/aarch64-osx/271c152fe881f23c1e62408ec3935d709b219894529d86504cf3e8810b7267d2/9.4.7/lib/aarch64-osx-ghc-9.4.7/backend-0.1.0.0-DFjSjthr9Ty2gHB0LrrsHN-backend"
 dynlibdir  = "/Users/dannymckinney/Real-Time-Weather-Analysis-App/backend/.stack-work/install/aarch64-osx/271c152fe881f23c1e62408ec3935d709b219894529d86504cf3e8810b7267d2/9.4.7/lib/aarch64-osx-ghc-9.4.7"
 datadir    = "/Users/dannymckinney/Real-Time-Weather-Analysis-App/backend/.stack-work/install/aarch64-osx/271c152fe881f23c1e62408ec3935d709b219894529d86504cf3e8810b7267d2/9.4.7/share/aarch64-osx-ghc-9.4.7/backend-0.1.0.0"
 libexecdir = "/Users/dannymckinney/Real-Time-Weather-Analysis-App/backend/.stack-work/install/aarch64-osx/271c152fe881f23c1e62408ec3935d709b219894529d86504cf3e8810b7267d2/9.4.7/libexec/aarch64-osx-ghc-9.4.7/backend-0.1.0.0"

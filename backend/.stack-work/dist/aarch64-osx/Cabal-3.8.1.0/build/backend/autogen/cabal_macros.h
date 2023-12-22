@@ -20,6 +20,16 @@
   (major1) == 2 && (major2) <  1 || \
   (major1) == 2 && (major2) == 1 && (minor) <= 2)
 #endif /* MIN_VERSION_aeson */
+/* package async-2.2.4 */
+#ifndef VERSION_async
+#define VERSION_async "2.2.4"
+#endif /* VERSION_async */
+#ifndef MIN_VERSION_async
+#define MIN_VERSION_async(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  2 || \
+  (major1) == 2 && (major2) == 2 && (minor) <= 4)
+#endif /* MIN_VERSION_async */
 /* package backend-0.1.0.0 */
 #ifndef VERSION_backend
 #define VERSION_backend "0.1.0.0"
@@ -60,6 +70,16 @@
   (major1) == 0 && (major2) <  11 || \
   (major1) == 0 && (major2) == 11 && (minor) <= 5)
 #endif /* MIN_VERSION_bytestring */
+/* package hslogger-1.3.1.0 */
+#ifndef VERSION_hslogger
+#define VERSION_hslogger "1.3.1.0"
+#endif /* VERSION_hslogger */
+#ifndef MIN_VERSION_hslogger
+#define MIN_VERSION_hslogger(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  3 || \
+  (major1) == 1 && (major2) == 3 && (minor) <= 1)
+#endif /* MIN_VERSION_hslogger */
 /* package http-client-0.7.14 */
 #ifndef VERSION_http_client
 #define VERSION_http_client "0.7.14"
@@ -90,6 +110,16 @@
   (major1) == 0 && (major2) <  12 || \
   (major1) == 0 && (major2) == 12 && (minor) <= 3)
 #endif /* MIN_VERSION_http_types */
+/* package parallel-3.2.2.0 */
+#ifndef VERSION_parallel
+#define VERSION_parallel "3.2.2.0"
+#endif /* VERSION_parallel */
+#ifndef MIN_VERSION_parallel
+#define MIN_VERSION_parallel(major1,major2,minor) (\
+  (major1) <  3 || \
+  (major1) == 3 && (major2) <  2 || \
+  (major1) == 3 && (major2) == 2 && (minor) <= 2)
+#endif /* MIN_VERSION_parallel */
 /* package servant-0.19.1 */
 #ifndef VERSION_servant
 #define VERSION_servant "0.19.1"
@@ -243,7 +273,7 @@
 #endif /* MIN_TOOL_VERSION_runghc */
 
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "backend-0.1.0.0-4dqEnEUxw88DXgMmIf9bb5-backend"
+#define CURRENT_COMPONENT_ID "backend-0.1.0.0-DFjSjthr9Ty2gHB0LrrsHN-backend"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

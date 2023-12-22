@@ -1,0 +1,5 @@
+INFO: Found elm at /usr/local/bin/elm
+INFO: Found elm 0.19.1
+INFO: Found elm-format at /Users/dannymckinney/node_modules/.bin/elm-format
+INFO: Found elm-format 0.8.7
+ERROR: You must run the upgrade from a folder containing elm-package.json

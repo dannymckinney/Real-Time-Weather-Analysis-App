@@ -20,21 +20,25 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/githubuser/MyWeatherApp#readme>
 
 dependencies:
-- base >= 4.7 && < 5
-- servant
-- servant-server
-- http-types
-- http-client
-- http-conduit
-- bytestring
-- aeson
-- warp
-- wai-app-static
-- wai-extra
-- blaze-html
-- text
-- servant-blaze
-- wai-cors
+  - base >= 4.7 && < 5
+  - servant
+  - servant-server
+  - http-types
+  - http-client
+  - http-conduit
+  - bytestring
+  - aeson
+  - warp
+  - wai-app-static
+  - wai-extra
+  - blaze-html
+  - text
+  - servant-blaze
+  - wai-cors
+  - async
+  - hslogger
+  - parallel
+
 
 ghc-options:
 - -Wall
@@ -71,3 +75,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - backend
+    - hspec
